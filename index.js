@@ -33,6 +33,12 @@ io.on('connection', (socket) => {
     socket.to(data.roomId).emit("receive_message", data);
   });
 
+  // 4. Sync Annotations (Arrows & Colors)
+  socket.on("sync_annotations", (data) => {
+    // data = { roomId, arrows, circles }
+    socket.to(data.roomId).emit("receive_annotations", data);
+  });
+
   socket.on("disconnect", () => {
     console.log('Disconnected:', socket.id);
   });
