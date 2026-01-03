@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://pawnrace-launchpad.vercel.app", // Development ke liye theek hai
+    origin: "*", // Development ke liye theek hai
     methods: ["GET", "POST"]
   }
 });
