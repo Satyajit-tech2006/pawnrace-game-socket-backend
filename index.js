@@ -64,6 +64,11 @@ io.on('connection', (socket) => {
     socket.to(data.roomId).emit("receive_message", data);
   });
 
+  socket.on('update_controls', ({ roomId, controls }) => {
+    // Broadcast the new control state to everyone in the room
+    io.in(roomId).emit('controls_updated', controls);
+});
+
   // 5. Disconnect
   socket.on("disconnect", () => {
     const user = userMap[socket.id];
