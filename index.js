@@ -12,30 +12,25 @@ const io = new Server(server, {
   }
 });
 
-// Map to track users
 const userMap = {};
 
 io.on('connection', (socket) => {
   console.log('Connected:', socket.id);
 
-  // 1. Join Room (Crash-Proof Version)
   socket.on("join_room", (data) => {
-    // Handle both old format (string) and new format (object)
     let roomId, user;
-    
     if (typeof data === 'string') {
         roomId = data;
-        user = {}; // Empty object if no user data sent
+        user = {}; 
     } else {
         roomId = data.roomId;
-        user = data.user || {}; // Safety check
+        user = data.user || {}; 
     }
 
-    if (!roomId) return; // Ignore invalid requests
+    if (!roomId) return; 
 
     socket.join(roomId);
     
-    // Store User Info safely
     userMap[socket.id] = { 
         roomId, 
         name: user.name || "Unknown User", 
@@ -44,32 +39,40 @@ io.on('connection', (socket) => {
     };
 
     console.log(`${userMap[socket.id].name} joined ${roomId}`);
-
-    // Broadcast updated user list
     broadcastUserList(roomId);
   });
 
-  // 2. Make Move
+  // --- SYNC EVENTS ---
+  socket.on("request_sync", (roomId) => {
+      socket.to(roomId).emit("perform_sync", socket.id);
+  });
+
+  socket.on("send_sync_data", (data) => {
+      io.to(data.targetId).emit("receive_sync_data", data);
+  });
+
+  // --- LESSON LOAD EVENT ---
+  socket.on("load_pgn", (data) => {
+      // Broadcast PGN to room so everyone loads the full lesson
+      socket.to(data.roomId).emit("receive_pgn", data);
+  });
+
   socket.on("make_move", (data) => {
     socket.to(data.roomId).emit("receive_move", data);
   });
 
-  // 3. Annotations
   socket.on("sync_annotations", (data) => {
     socket.to(data.roomId).emit("receive_annotations", data);
   });
 
-  // 4. Chat
   socket.on("send_message", (data) => {
     socket.to(data.roomId).emit("receive_message", data);
   });
 
   socket.on('update_controls', ({ roomId, controls }) => {
-    // Broadcast the new control state to everyone in the room
     io.in(roomId).emit('controls_updated', controls);
-});
+  });
 
-  // 5. Disconnect
   socket.on("disconnect", () => {
     const user = userMap[socket.id];
     if (user) {
