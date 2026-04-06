@@ -42,7 +42,6 @@ io.on('connection', (socket) => {
     broadcastUserList(roomId);
   });
 
-  // --- SYNC EVENTS ---
   socket.on("request_sync", (roomId) => {
       socket.to(roomId).emit("perform_sync", socket.id);
   });
